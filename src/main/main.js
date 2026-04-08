@@ -191,14 +191,69 @@ function showMainWindow () {
   mainWindow.focus();
 }
 
+function createFallbackTrayIcon () {
+  const width = 16;
+  const height = 16;
+  const data = Buffer.alloc(width * height * 4, 0);
+
+  const setPixel = (x, y, r, g, b, a = 255) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return;
+    const idx = (y * width + x) * 4;
+    data[idx] = b;
+    data[idx + 1] = g;
+    data[idx + 2] = r;
+    data[idx + 3] = a;
+  };
+
+  // Accent background block for high visibility in the system tray.
+  for (let y = 2; y <= 13; y++) {
+    for (let x = 2; x <= 13; x++) {
+      setPixel(x, y, 124, 106, 247, 255);
+    }
+  }
+
+  // Draw a small white "P" glyph.
+  for (let y = 4; y <= 11; y++) {
+    setPixel(5, y, 255, 255, 255, 255);
+    setPixel(6, y, 255, 255, 255, 255);
+  }
+  for (let x = 6; x <= 10; x++) {
+    setPixel(x, 4, 255, 255, 255, 255);
+    setPixel(x, 5, 255, 255, 255, 255);
+    setPixel(x, 7, 255, 255, 255, 255);
+    setPixel(x, 8, 255, 255, 255, 255);
+  }
+  for (let y = 5; y <= 8; y++) {
+    setPixel(10, y, 255, 255, 255, 255);
+    setPixel(11, y, 255, 255, 255, 255);
+  }
+
+  return nativeImage.createFromBitmap(data, { width, height, scaleFactor: 1 });
+}
+
+function getTrayIcon () {
+  const candidates = [
+    path.join(__dirname, '../assets/tray-icon.png'),
+    path.join(__dirname, '../assets/icon.ico'),
+  ];
+
+  for (const iconPath of candidates) {
+    if (!fs.existsSync(iconPath)) continue;
+    const icon = nativeImage.createFromPath(iconPath);
+    if (!icon.isEmpty()) {
+      return icon;
+    }
+  }
+
+  return createFallbackTrayIcon();
+}
+
 function createTray () {
   if (tray) return;
 
-  // Fall back to a simple generated icon if no asset icon is available in dev.
-  const iconPath = path.join(__dirname, '../assets/icon.ico');
-  let trayIcon = nativeImage.createFromPath(iconPath);
-  if (trayIcon.isEmpty()) {
-    trayIcon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAM1BMVEUAAAB8avd8avd8avd8avd8avd8avd8avd8avd8avd8avd8avd8avd8avd8avd8avd8avdQU8d6AAAAEHRSTlMA5PrXSMO2n51qV0IhDsN2RG96lwAAAE5JREFUGNNjYGBgZGJmYmRgAJEYGJmYGMSBmRmYGRgZEJkYGJiZGRgEGBgYwhKQYGRgZGBlYGRgYGSAAkYGJiYmBiYGFhZGBmYHAAAHWAAmYwSxbQAAAABJRU5ErkJggg==');
+  let trayIcon = getTrayIcon();
+  if (process.platform === 'win32') {
+    trayIcon = trayIcon.resize({ width: 16, height: 16 });
   }
 
   tray = new Tray(trayIcon);
