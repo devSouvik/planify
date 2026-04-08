@@ -4,34 +4,110 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timer</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --bg: #0d0d0f; --text: #f0eff8; }
+  :root {
+    --bg: #f7f2e8;
+    --surface: #fffdfa;
+    --border: #d6cab7;
+    --text: #1f3548;
+    --shadow: rgba(38, 29, 14, 0.14);
+  }
 
   html, body {
     height: 100%;
-    background: var(--bg);
+    background: radial-gradient(300px 180px at 95% -20%, rgba(2,132,199,0.18), transparent 62%), linear-gradient(165deg, var(--bg), #efe7db);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: 'Azeret Mono', monospace;
     overflow: hidden;
     -webkit-app-region: drag;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .timer-shell {
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--surface), #f7efe4);
+    box-shadow: 0 12px 24px var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .timer-shell::before {
+    content: '';
+    position: absolute;
+    left: -40px;
+    top: -70px;
+    width: 120px;
+    height: 220px;
+    transform: rotate(18deg);
+    background: linear-gradient(180deg, rgba(15,118,110,0.15), transparent 74%);
+    pointer-events: none;
   }
 
   .timer {
-    font-size: 44px;
-    line-height: 1;
-    font-weight: 500;
-    letter-spacing: 1px;
+    font-size: 36px;
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: 0.25px;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    color: #22384c;
+    text-shadow: 0 2px 14px rgba(15,118,110,0.18);
     user-select: none;
+    z-index: 1;
+  }
+
+  html[data-theme='dark'] {
+    --bg: #0d1219;
+    --surface: #161f2a;
+    --border: #2f3e52;
+    --text: #e7edf5;
+    --shadow: rgba(0, 0, 0, 0.34);
+  }
+
+  html[data-theme='dark'] body {
+    background: radial-gradient(300px 180px at 95% -20%, rgba(56,189,248,0.22), transparent 62%), linear-gradient(165deg, var(--bg), #121a24);
+    color: var(--text);
+  }
+
+  html[data-theme='dark'] .timer-shell {
+    background: linear-gradient(180deg, #161f2a, #111925);
+    border-color: var(--border);
+    box-shadow: 0 12px 24px var(--shadow);
+  }
+
+  html[data-theme='dark'] .timer-shell::before {
+    background: linear-gradient(180deg, rgba(31,174,164,0.2), transparent 74%);
+  }
+
+  html[data-theme='dark'] .timer {
+    color: #e8f0fa;
+    text-shadow: 0 2px 14px rgba(31,174,164,0.24);
   }
 </style>
+<script>
+  (() => {
+    if (localStorage.getItem('planify-theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
 </head>
 <body>
-<div class="timer" id="timerDisplay">05:00</div>
+<div class="timer-shell">
+  <div class="timer" id="timerDisplay">05:00</div>
+</div>
 
 <script>
 let plan = null;

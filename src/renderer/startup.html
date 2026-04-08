@@ -4,25 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Planify – Start</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Azeret+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0d0d0f;
-    --surface: #141418;
-    --surface2: #1c1c22;
-    --border: #2a2a36;
-    --accent: #7c6af7;
-    --text: #f0eff8;
-    --text2: #9994b8;
-    --text3: #5c587a;
+    --bg: #f7f3ea;
+    --bg-soft: #efe8dc;
+    --surface: #fffdfa;
+    --surface2: #f5ede3;
+    --border: #d7cdbe;
+    --accent: #0f766e;
+    --accent2: #0284c7;
+    --text: #1f2a37;
+    --text2: #4c5a67;
+    --text3: #7e8984;
+    --font-ui: 'Lexend', sans-serif;
+    --font-mono: 'Azeret Mono', monospace;
   }
 
   html, body {
     height: 100%;
-    background: var(--bg);
+    background:
+      radial-gradient(800px 420px at 92% -10%, rgba(2,132,199,0.17), transparent 52%),
+      radial-gradient(620px 340px at -4% 112%, rgba(234,88,12,0.13), transparent 56%),
+      linear-gradient(170deg, var(--bg) 0%, var(--bg-soft) 100%);
     color: var(--text);
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
     -webkit-app-region: drag;
     overflow: hidden;
     display: flex;
@@ -32,38 +43,137 @@
 
   .card {
     -webkit-app-region: no-drag;
-    background: var(--surface);
+    background: linear-gradient(180deg, #fffdfa, #f8f2e9);
     border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 32px;
-    width: 380px;
-    text-align: center;
-    animation: fadeIn 0.25s ease;
+    border-radius: 20px;
+    box-shadow: 0 24px 52px rgba(42, 32, 16, 0.2);
+    padding: 30px;
+    width: min(430px, calc(100vw - 26px));
+    text-align: left;
+    animation: fadeIn 0.28s ease;
   }
-  @keyframes fadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-  .logo { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
-  .logo span { color: var(--accent); }
-  .tagline { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 28px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid #a9d7ea;
+    background: #e8f7ff;
+    color: #135985;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+  }
 
-  .icon { font-size: 40px; margin-bottom: 16px; }
-  .question { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-  .sub { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 28px; }
+  .logo { font-size: 30px; font-weight: 800; line-height: 1.05; letter-spacing: -0.45px; margin-bottom: 8px; color: #1f3548; }
+  .logo span { color: #ea580c; }
+  .tagline { font-size: 10.5px; color: var(--text3); line-height: 1.5; font-family: var(--font-mono); margin-bottom: 24px; letter-spacing: 0.3px; }
+
+  .icon { font-size: 36px; margin-bottom: 12px; }
+  .question { font-size: 21px; font-weight: 800; line-height: 1.22; margin-bottom: 8px; color: #24394f; }
+  .sub { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 26px; max-width: 34ch; }
 
   .btn-row { display: flex; gap: 10px; }
   .btn {
-    flex: 1; padding: 12px; border-radius: 10px;
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    flex: 1; padding: 11px 12px; border-radius: 11px;
+    font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; line-height: 1.2;
     cursor: pointer; border: none; transition: all 0.15s;
   }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #6a59e0; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(124,106,247,0.4); }
-  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); }
+  .btn-primary {
+    background: linear-gradient(130deg, var(--accent), var(--accent2));
+    border: 1px solid #0f766e44;
+    color: #f8fffe;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(2,132,199,0.25);
+  }
+  .btn-ghost {
+    background: var(--surface2);
+    color: #54636f;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover {
+    color: #2d404f;
+    border-color: #acb9c2;
+  }
+
+  html[data-theme='dark'] {
+    --bg: #0d1219;
+    --bg-soft: #121a24;
+    --surface: #161f2a;
+    --surface2: #1d2734;
+    --border: #2f3e52;
+    --accent: #1faea4;
+    --accent2: #38bdf8;
+    --text: #e7edf5;
+    --text2: #b2c0d0;
+    --text3: #7f90a3;
+  }
+
+  html[data-theme='dark'] body {
+    background:
+      radial-gradient(800px 420px at 92% -10%, rgba(56,189,248,0.18), transparent 52%),
+      radial-gradient(620px 340px at -4% 112%, rgba(249,115,22,0.16), transparent 56%),
+      linear-gradient(170deg, var(--bg) 0%, var(--bg-soft) 100%);
+    color: var(--text);
+  }
+
+  html[data-theme='dark'] .card {
+    background: linear-gradient(180deg, #161f2a, #111925);
+    border-color: var(--border);
+    box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34);
+  }
+
+  html[data-theme='dark'] .pill {
+    border-color: #3c5f7a;
+    background: #1e3447;
+    color: #9fd9ff;
+  }
+
+  html[data-theme='dark'] .logo { color: #e7eef8; }
+  html[data-theme='dark'] .logo span { color: #f97316; }
+  html[data-theme='dark'] .question { color: #e7eef8; }
+  html[data-theme='dark'] .sub,
+  html[data-theme='dark'] .btn-ghost { color: var(--text2); }
+
+  html[data-theme='dark'] .btn-ghost {
+    background: var(--surface2);
+    border-color: var(--border);
+  }
+
+  html[data-theme='dark'] .btn-ghost:hover {
+    border-color: #4f6380;
+    color: #f1f7ff;
+  }
+
+  @media (max-width: 460px) {
+    .card {
+      padding: 24px;
+      border-radius: 16px;
+    }
+
+    .btn-row {
+      flex-direction: column;
+    }
+  }
 </style>
+<script>
+  (() => {
+    if (localStorage.getItem('planify-theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
 </head>
 <body>
 <div class="card">
+  <div class="pill">Wake Mode</div>
   <div class="logo">Plan<span>ify</span></div>
   <div class="tagline">your productivity timer</div>
   <div class="icon">⚡</div>
