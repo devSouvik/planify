@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg: #0d0d0f; --text: #f0eff8; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+    -webkit-app-region: drag;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .timer {
+    font-size: 44px;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 1px;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+<div class="timer" id="timerDisplay">05:00</div>
+
+<script>
+let plan = null;
+let sessionId = null;
+let remaining = 0;
+let interval = null;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function render() {
+  document.getElementById('timerDisplay').textContent = formatTime(Math.max(remaining, 0));
+}
+
+function tick() {
+  remaining--;
+  render();
+
+  if (remaining <= 0) {
+    clearInterval(interval);
+    complete();
+  }
+}
+
+function startTimer(data) {
+  if (!data) return;
+  plan = data.plan || data;
+  sessionId = data.sessionId || null;
+  remaining = Math.max(1, (plan.duration || 5) * 60);
+  render();
+
+  clearInterval(interval);
+  interval = setInterval(tick, 1000);
+}
+
+function complete() {
+  if (!plan) return;
+  window.planify.timerComplete({ planId: plan.id, sessionId });
+}
+
+window.planify.on('timer:init', (payload) => {
+  startTimer(payload);
+});
+</script>
+</body>
+</html>

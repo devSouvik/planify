@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planify – Start</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141418;
+    --surface2: #1c1c22;
+    --border: #2a2a36;
+    --accent: #7c6af7;
+    --text: #f0eff8;
+    --text2: #9994b8;
+    --text3: #5c587a;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    -webkit-app-region: drag;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    -webkit-app-region: no-drag;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    width: 380px;
+    text-align: center;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+  .logo { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+  .logo span { color: var(--accent); }
+  .tagline { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 28px; }
+
+  .icon { font-size: 40px; margin-bottom: 16px; }
+  .question { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .sub { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 28px; }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 10px;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #6a59e0; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(124,106,247,0.4); }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Plan<span>ify</span></div>
+  <div class="tagline">your productivity timer</div>
+  <div class="icon">⚡</div>
+  <div class="question">Resume your plans?</div>
+  <div class="sub">You have active plans configured. Would you like to start all enabled plans automatically?</div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="respond(false)">Not now</button>
+    <button class="btn btn-primary" onclick="respond(true)">Start All Plans</button>
+  </div>
+</div>
+<script>
+  function respond(startAll) {
+    window.planify.sendStartupResponse({ startAll });
+  }
+</script>
+</body>
+</html>

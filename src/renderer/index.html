@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141418;
+    --surface2: #1c1c22;
+    --surface3: #242430;
+    --border: #2a2a36;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --accent3: #6af7c0;
+    --text: #f0eff8;
+    --text2: #9994b8;
+    --text3: #5c587a;
+    --danger: #f76a6a;
+    --success: #6af7a0;
+    --radius: 12px;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; overflow: hidden; }
+
+  /* ── Titlebar ── */
+  .titlebar {
+    -webkit-app-region: drag;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+  .titlebar-logo { font-size: 15px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+  .titlebar-logo span { color: var(--accent); }
+  .titlebar-controls { -webkit-app-region: no-drag; display: flex; gap: 8px; }
+  .titlebar-btn {
+    width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer;
+    transition: opacity 0.15s; opacity: 0.7;
+  }
+  .titlebar-btn:hover { opacity: 1; }
+  .titlebar-btn.close { background: #f76a6a; }
+  .titlebar-btn.min { background: var(--accent2); }
+  .titlebar-btn.max { background: var(--accent3); }
+
+  /* ── Layout ── */
+  .app { display: flex; height: calc(100vh - 40px); }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 12px;
+    gap: 4px;
+  }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 0 8px;
+    margin-bottom: 8px;
+    margin-top: 16px;
+  }
+  .sidebar-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface3); color: var(--text); border-color: var(--border); }
+  .nav-item .icon { width: 18px; text-align: center; font-size: 15px; }
+  .sidebar-spacer { flex: 1; }
+  .add-plan-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .add-plan-btn:hover { background: #6a59e0; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,106,247,0.4); }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Views ── */
+  .view { display: none; flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .view.active { display: block; }
+
+  .view-header { margin-bottom: 28px; }
+  .view-title { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; }
+  .view-sub { font-size: 13px; color: var(--text2); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* ── Stats Row ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-line, var(--accent));
+  }
+  .stat-card:nth-child(2) { --accent-line: var(--accent2); }
+  .stat-card:nth-child(3) { --accent-line: var(--accent3); }
+  .stat-card:nth-child(4) { --accent-line: #f76af0; }
+  .stat-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .stat-meta { font-size: 11px; color: var(--text2); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* ── Plans Grid ── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--text2); text-transform: uppercase; }
+  .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .plan-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .plan-card.disabled { opacity: 0.5; }
+
+  .plan-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .plan-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .plan-card-actions { display: flex; gap: 6px; }
+  .plan-action-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 13px; transition: all 0.15s;
+  }
+  .plan-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .plan-action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .plan-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .plan-desc { font-size: 12px; color: var(--text2); margin-bottom: 14px; line-height: 1.5; min-height: 18px; }
+
+  .plan-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .plan-badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 9px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text2);
+  }
+  .plan-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .plan-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .countdown { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text3); }
+  .countdown.soon { color: var(--accent2); }
+
+  .plan-run-btn {
+    min-width: 84px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .plan-run-btn:hover { color: var(--text); border-color: var(--accent); }
+  .plan-run-btn.running {
+    background: #6af7a022;
+    color: var(--success);
+    border-color: #6af7a044;
+  }
+  .plan-run-btn.running:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: #f76a6a22;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    grid-column: 1 / -1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px; text-align: center; gap: 12px;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 8px; opacity: 0.4; }
+  .empty-title { font-size: 18px; font-weight: 700; color: var(--text2); }
+  .empty-sub { font-size: 13px; color: var(--text3); max-width: 300px; line-height: 1.6; }
+
+  /* ── History View ── */
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px;
+    font-size: 13px;
+  }
+  .history-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .history-status.completed { background: var(--success); }
+  .history-status.missed { background: var(--danger); }
+  .history-plan { font-weight: 600; flex: 1; }
+  .history-time { font-family: 'DM Mono', monospace; color: var(--text2); font-size: 12px; }
+  .history-duration { font-family: 'DM Mono', monospace; color: var(--text3); font-size: 11px; background: var(--surface2); padding: 2px 7px; border-radius: 4px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; width: 460px; max-height: 80vh;
+    overflow-y: auto; padding: 28px; animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .modal-title { font-size: 20px; font-weight: 800; }
+  .modal-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 12px; font-weight: 700; letter-spacing: 0.8px; color: var(--text2); text-transform: uppercase; margin-bottom: 7px; display: block; }
+  .form-input {
+    width: 100%; padding: 10px 13px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Syne', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  textarea.form-input { resize: vertical; min-height: 70px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-hint { font-size: 11px; color: var(--text3); margin-top: 5px; font-family: 'DM Mono', monospace; }
+
+  .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+  .emoji-opt {
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); cursor: pointer; font-size: 18px; display: flex;
+    align-items: center; justify-content: center; transition: all 0.1s;
+  }
+  .emoji-opt:hover, .emoji-opt.selected { border-color: var(--accent); background: rgba(124,106,247,0.15); }
+
+  .color-picker { display: flex; gap: 8px; }
+  .color-opt {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.15s;
+  }
+  .color-opt:hover, .color-opt.selected { border-color: white; transform: scale(1.1); }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+  .btn {
+    flex: 1; padding: 11px; border-radius: 8px; font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #6a59e0; }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+
+  /* ── Notification toast ── */
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+  .toast {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; font-size: 13px; font-weight: 600; pointer-events: auto;
+    animation: toastIn 0.2s ease; min-width: 220px; display: flex; align-items: center; gap: 10px;
+  }
+  @keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.info { border-left: 3px solid var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Titlebar -->
+<div class="titlebar">
+  <div class="titlebar-logo">Plan<span>ify</span></div>
+  <div class="titlebar-controls">
+    <button class="titlebar-btn min" onclick="window.planify.minimize()"></button>
+    <button class="titlebar-btn max" onclick="window.planify.maximize()"></button>
+    <button class="titlebar-btn close" onclick="window.planify.close()"></button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Navigation</div>
+    <div class="nav-item active" data-view="dashboard">
+      <span class="icon">⬡</span> Dashboard
+    </div>
+    <div class="nav-item" data-view="plans">
+      <span class="icon">◈</span> All Plans
+    </div>
+    <div class="nav-item" data-view="history">
+      <span class="icon">◷</span> History
+    </div>
+
+    <div class="sidebar-spacer"></div>
+    <button class="add-plan-btn" id="openModalBtn">＋ New Plan</button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Dashboard View -->
+    <div class="view active" id="view-dashboard">
+      <div class="view-header">
+        <div class="view-title">Dashboard</div>
+        <div class="view-sub" id="dashDate"></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Active Plans</div>
+          <div class="stat-value" id="stat-active">0</div>
+          <div class="stat-meta">running now</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Sessions Today</div>
+          <div class="stat-value" id="stat-today">0</div>
+          <div class="stat-meta">triggered today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value" id="stat-completed">0</div>
+          <div class="stat-meta">sessions done</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Time Invested</div>
+          <div class="stat-value" id="stat-time">0m</div>
+          <div class="stat-meta">total today</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Active Plans</div>
+      </div>
+      <div class="plans-grid" id="dashboard-plans"></div>
+    </div>
+
+    <!-- All Plans View -->
+    <div class="view" id="view-plans">
+      <div class="view-header">
+        <div class="view-title">All Plans</div>
+        <div class="view-sub">Manage and configure your plans</div>
+      </div>
+      <div class="plans-grid" id="all-plans"></div>
+    </div>
+
+    <!-- History View -->
+    <div class="view" id="view-history">
+      <div class="view-header">
+        <div class="view-title">History</div>
+        <div class="view-sub">Session log and activity</div>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Add/Edit Plan Modal -->
+<div class="modal-overlay" id="planModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">New Plan</div>
+      <button class="modal-close" id="closeModal">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Plan Name</label>
+      <input class="form-input" id="f-name" type="text" placeholder="e.g. Stand Up, Water Break, Review…">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-input" id="f-desc" placeholder="What does this plan involve?"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Icon</label>
+      <div class="emoji-picker" id="emojiPicker">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div class="color-picker" id="colorPicker"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Frequency</label>
+        <input class="form-input" id="f-freq" type="number" min="1" max="1440" value="60" placeholder="60">
+        <div class="form-hint">minutes between reminders</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration</label>
+        <input class="form-input" id="f-dur" type="number" min="1" max="120" value="5" placeholder="5">
+        <div class="form-hint">minutes per session</div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelModal">Cancel</button>
+      <button class="btn btn-primary" id="savePlan">Save Plan</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const EMOJIS = ['🏃','💧','📚','🧘','🌿','☕','💪','🎯','🧠','💡','📝','🎵','🔔','⚡','🌟','🏋️','🤸','👁️','🛌','🍎'];
+const COLORS = ['#7c6af7','#f7a26a','#6af7c0','#f76a6a','#f76af0','#6ab8f7','#f7e76a','#a8f76a'];
+
+let plans = [], sessions = [];
+let editingPlanId = null;
+let timerState = {};
+let selectedEmoji = EMOJIS[0];
+let selectedColor = COLORS[0];
+
+function isPlanRunning(plan) {
+  if (!plan) return false;
+  if (typeof plan.isRunning === 'boolean') return plan.isRunning;
+  return Boolean(plan.enabled);
+}
+
+function normalizePlans(inputPlans) {
+  return (inputPlans || []).map((plan) => {
+    const running = isPlanRunning(plan);
+    return { ...plan, isRunning: running, enabled: running };
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const data = await window.planify.loadData();
+  plans = normalizePlans(data.plans || []);
+  sessions = data.sessions || [];
+
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  buildEmojiPicker();
+  buildColorPicker();
+  render();
+
+  window.planify.on('plan:triggered', ({ plan }) => {
+    showToast(`⏰ ${plan.name} session started!`, 'info');
+    const data2 = window.planify.loadData().then(d => { sessions = d.sessions; render(); });
+  });
+  window.planify.on('session:completed', () => {
+    window.planify.loadData().then(d => { sessions = d.sessions; render(); });
+  });
+  window.planify.on('timer:state', (state) => {
+    timerState = state;
+    renderCountdowns();
+  });
+}
+
+function buildEmojiPicker() {
+  const el = document.getElementById('emojiPicker');
+  el.innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt${e===selectedEmoji?' selected':''}" data-emoji="${e}" onclick="selectEmoji('${e}')">${e}</div>`
+  ).join('');
+}
+function buildColorPicker() {
+  const el = document.getElementById('colorPicker');
+  el.innerHTML = COLORS.map(c =>
+    `<div class="color-opt${c===selectedColor?' selected':''}" data-color="${c}" style="background:${c}" onclick="selectColor('${c}')"></div>`
+  ).join('');
+}
+function selectEmoji(e) { selectedEmoji = e; buildEmojiPicker(); }
+function selectColor(c) { selectedColor = c; buildColorPicker(); }
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  renderStats();
+  renderDashboardPlans();
+  renderAllPlans();
+  renderHistory();
+}
+
+function renderStats() {
+  const active = plans.filter((p) => isPlanRunning(p)).length;
+  const today = sessions.filter(s => new Date(s.startedAt).toDateString() === new Date().toDateString());
+  const completed = today.filter(s => s.completed).length;
+  const totalMin = today.filter(s => s.completed).reduce((a, s) => a + s.duration, 0);
+
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-today').textContent = today.length;
+  document.getElementById('stat-completed').textContent = completed;
+  document.getElementById('stat-time').textContent = totalMin >= 60 ? `${Math.floor(totalMin/60)}h ${totalMin%60}m` : `${totalMin}m`;
+}
+
+function planCardHTML(plan, compact = false) {
+  const running = isPlanRunning(plan);
+  const todaySessions = sessions.filter(s => s.planId === plan.id && new Date(s.startedAt).toDateString() === new Date().toDateString());
+  const completedToday = todaySessions.filter(s => s.completed).length;
+
+  return `
+    <div class="plan-card${running?'':' disabled'}" data-id="${plan.id}">
+      <div class="plan-card-header">
+        <div class="plan-icon" style="background:${plan.color}22">${plan.emoji}</div>
+        <div class="plan-card-actions">
+          <button class="plan-action-btn" onclick="openEditModal('${plan.id}')" title="Edit">✎</button>
+          <button class="plan-action-btn danger" onclick="deletePlan('${plan.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="plan-name">${plan.name}</div>
+      <div class="plan-desc">${plan.description || ''}</div>
+      <div class="plan-meta">
+        <div class="plan-badge">
+          <div class="dot" style="background:${plan.color}"></div>
+          Every ${plan.frequency}min
+        </div>
+        <div class="plan-badge">⏱ ${plan.duration}min</div>
+        <div class="plan-badge">${running ? '▶ Running' : '○ Idle'}</div>
+        <div class="plan-badge">✓ ${completedToday} today</div>
+      </div>
+      <div class="plan-footer">
+        <div class="countdown" id="cd-${plan.id}">
+          ${running ? 'Waiting for timer…' : 'Not running'}
+        </div>
+        <button class="plan-run-btn ${running ? 'running' : ''}" onclick="setPlanRunning('${plan.id}', ${running ? 'false' : 'true'})">
+          ${running ? 'Stop' : 'Start'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderDashboardPlans() {
+  const el = document.getElementById('dashboard-plans');
+  const active = plans.filter((p) => isPlanRunning(p));
+  el.innerHTML = active.length === 0
+    ? `<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No active plans</div><div class="empty-sub">Create a plan and press Start when you want it to execute.</div></div>`
+    : active.map(p => planCardHTML(p)).join('');
+}
+
+function renderAllPlans() {
+  const el = document.getElementById('all-plans');
+  el.innerHTML = plans.length === 0
+    ? `<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No plans yet</div><div class="empty-sub">Create your first plan using the button in the sidebar.</div></div>`
+    : plans.map(p => planCardHTML(p)).join('');
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  const sorted = [...sessions].sort((a,b) => new Date(b.startedAt) - new Date(a.startedAt)).slice(0, 50);
+  if (sorted.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">◷</div><div class="empty-title">No sessions yet</div><div class="empty-sub">Session history will appear here.</div></div>`;
+    return;
+  }
+  el.innerHTML = sorted.map(s => {
+    const plan = plans.find(p => p.id === s.planId);
+    const t = new Date(s.startedAt);
+    return `
+      <div class="history-item">
+        <div class="history-status ${s.completed?'completed':'missed'}"></div>
+        <span style="font-size:16px">${plan?.emoji || '●'}</span>
+        <div class="history-plan">${plan?.name || 'Unknown Plan'}</div>
+        <div class="history-time">${t.toLocaleDateString()} ${t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="history-duration">${s.duration}min</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCountdowns() {
+  plans.forEach((plan) => {
+    const el = document.getElementById(`cd-${plan.id}`);
+    if (!el) return;
+
+    if (!isPlanRunning(plan)) {
+      el.textContent = 'Not running';
+      el.className = 'countdown';
+      return;
+    }
+
+    const info = timerState[plan.id];
+    if (!info) {
+      el.textContent = 'Waiting for next cycle…';
+      el.className = 'countdown';
+      return;
+    }
+
+    const remaining = Math.max(0, info.nextTrigger - Date.now());
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    const text = `Next in ${m}:${String(s).padStart(2,'0')}`;
+    el.textContent = text;
+    el.className = `countdown${remaining < 60000 ? ' soon' : ''}`;
+  });
+}
+
+// ── Plan Actions ──────────────────────────────────────────────────────────────
+async function setPlanRunning(planId, shouldRun) {
+  await window.planify.togglePlan(planId, shouldRun);
+  const plan = plans.find(p => p.id === planId);
+  if (plan) {
+    plan.isRunning = shouldRun;
+    plan.enabled = shouldRun;
+  }
+  render();
+  showToast(`${shouldRun ? '▶' : '■'} ${plans.find(p=>p.id===planId)?.name} ${shouldRun?'running':'stopped'}`, 'info');
+}
+
+async function deletePlan(planId) {
+  await window.planify.deletePlan(planId);
+  plans = plans.filter(p => p.id !== planId);
+  render();
+  showToast('Plan deleted', 'info');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal() {
+  editingPlanId = null;
+  document.getElementById('modalTitle').textContent = 'New Plan';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-freq').value = 60;
+  document.getElementById('f-dur').value = 5;
+  selectedEmoji = EMOJIS[0];
+  selectedColor = COLORS[0];
+  buildEmojiPicker();
+  buildColorPicker();
+  document.getElementById('planModal').classList.add('open');
+}
+
+function openEditModal(planId) {
+  const plan = plans.find(p => p.id === planId);
+  if (!plan) return;
+  editingPlanId = planId;
+  document.getElementById('modalTitle').textContent = 'Edit Plan';
+  document.getElementById('f-name').value = plan.name;
+  document.getElementById('f-desc').value = plan.description || '';
+  document.getElementById('f-freq').value = plan.frequency;
+  document.getElementById('f-dur').value = plan.duration;
+  selectedEmoji = plan.emoji || EMOJIS[0];
+  selectedColor = plan.color || COLORS[0];
+  buildEmojiPicker();
+  buildColorPicker();
+  document.getElementById('planModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('planModal').classList.remove('open');
+}
+
+async function savePlan() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+
+  const planData = {
+    name,
+    description: document.getElementById('f-desc').value.trim(),
+    emoji: selectedEmoji,
+    color: selectedColor,
+    frequency: parseInt(document.getElementById('f-freq').value) || 60,
+    duration: parseInt(document.getElementById('f-dur').value) || 5,
+  };
+
+  if (editingPlanId) {
+    planData.id = editingPlanId;
+    const updated = await window.planify.updatePlan({ ...plans.find(p=>p.id===editingPlanId), ...planData });
+    const idx = plans.findIndex(p => p.id === editingPlanId);
+    if (idx !== -1) plans[idx] = normalizePlans([updated])[0];
+    showToast('Plan updated ✓', 'success');
+  } else {
+    const newPlan = await window.planify.addPlan(planData);
+    plans.push(normalizePlans([newPlan])[0]);
+    showToast('Plan created ✓', 'success');
+  }
+
+  closeModal();
+  render();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById(`view-${item.dataset.view}`).classList.add('active');
+  });
+});
+
+document.getElementById('openModalBtn').addEventListener('click', openModal);
+document.getElementById('closeModal').addEventListener('click', closeModal);
+document.getElementById('cancelModal').addEventListener('click', closeModal);
+document.getElementById('savePlan').addEventListener('click', savePlan);
+document.getElementById('planModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
